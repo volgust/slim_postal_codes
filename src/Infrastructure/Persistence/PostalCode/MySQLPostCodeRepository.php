@@ -32,15 +32,15 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         $stmt = $this->pdo->prepare("
         SELECT *
         FROM locations l
-        WHERE l.region_name LIKE :address
-           OR l.district_name LIKE :address
-           OR l.settlement_name LIKE :address
-           OR l.post_office_name LIKE :address
+        WHERE l.region LIKE :address
+           OR l.district LIKE :address
+           OR l.settlement LIKE :address
+           OR l.post_office LIKE :address
         ORDER BY 
-            l.region_name ASC,
-            l.district_name ASC,
-            l.settlement_name ASC,
-            l.post_office_name ASC
+            l.region ASC,
+            l.district ASC,
+            l.settlement ASC,
+            l.post_office ASC
         LIMIT 50
     ");
 
