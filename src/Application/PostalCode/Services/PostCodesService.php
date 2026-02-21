@@ -6,14 +6,14 @@ use App\Application\PostalCode\DTO\ListPostCodesDTO;
 use App\Application\PostalCode\Resources\PostCodeResource;
 use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
 
-class ListPostCodesService
+class PostCodesService
 {
     public function __construct(
         private PostCodeRepositoryInterface $repository
     ) {
     }
 
-    public function execute(ListPostCodesDTO $request): array
+    public function search(ListPostCodesDTO $request): array
     {
         $results = [];
 
@@ -39,5 +39,37 @@ class ListPostCodesService
         }
 
         return $results;
+    }
+
+    /**
+     * Create one or more locations, skip duplicates
+     *
+     * @param array $locations Validated locations
+     * @return array ['created' => [...], 'errors' => [...]]
+     */
+    public function create(array $locations): array
+    {
+        $created = [];
+        $errors = [];
+
+        foreach ($locations as $index => $location) {
+            try {
+                if ($this->repository->existsByPostCode($location['post_code'])) {
+                    throw new \RuntimeException(
+                        "Duplicate post_code: {$location['post_code']}"
+                    );
+                }
+
+                $created[] = $this->repository->create($location);
+
+            } catch (\RuntimeException $e) {
+                $errors[] = [
+                    'location_index' => $index,
+                    'message' => $e->getMessage()
+                ];
+            }
+        }
+
+        return ['created' => $created, 'errors' => $errors];
     }
 }

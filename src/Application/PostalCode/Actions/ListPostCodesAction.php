@@ -6,13 +6,13 @@ namespace App\Application\PostalCode\Actions;
 
 use App\Application\Actions\Action;
 use App\Application\PostalCode\DTO\ListPostCodesDTO;
-use App\Application\PostalCode\Services\ListPostCodesService;
+use App\Application\PostalCode\Services\PostCodesService;
 use Psr\Http\Message\ResponseInterface as Response;
 
 class ListPostCodesAction extends Action
 {
     public function __construct(
-        private ListPostCodesService $service
+        private PostCodesService $service
     ) {
     }
 
@@ -26,7 +26,7 @@ class ListPostCodesAction extends Action
             page: isset($params['page']) ? (int)$params['page'] : 1
         );
 
-        $resources = $this->service->execute($dto);
+        $resources = $this->service->search($dto);
 
         return $this->respondWithData(
             array_map(fn($r) => $r->toArray(), $resources)

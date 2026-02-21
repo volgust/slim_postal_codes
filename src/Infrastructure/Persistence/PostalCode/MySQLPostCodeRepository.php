@@ -69,4 +69,59 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Insert a new location into the database.
+     *
+     * @param array $data
+     * @return array Inserted record including ID
+     */
+    public function create(array $data): array
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO locations
+                (region, district, settlement, post_office, post_code, api_created)
+            VALUES
+                (:region, :district, :settlement, :post_office, :post_code, :api_created)
+        ");
+
+        $stmt->execute([
+            ':region'       => $data['region'],
+            ':district'     => $data['district'],
+            ':settlement'   => $data['settlement'],
+            ':post_office'  => $data['post_office'],
+            ':post_code'    => $data['post_code'],
+            ':api_created'  => $data['api_created'] ?? 0,
+        ]);
+
+        $id = (int) $this->pdo->lastInsertId();
+
+        return $this->findById($id);
+    }
+
+    /**
+     * Find a location by ID.
+     */
+    public function findById(int $id): array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM locations WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $location = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$location) {
+            throw new \RuntimeException("Location not found with ID {$id}");
+        }
+
+        return $location;
+    }
+
+    /**
+     * Check if a post_code already exists
+     */
+    public function existsByPostCode(string $postCode): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM locations WHERE post_code = :post_code LIMIT 1");
+        $stmt->execute([':post_code' => $postCode]);
+        return (bool) $stmt->fetchColumn();
+    }
 }
