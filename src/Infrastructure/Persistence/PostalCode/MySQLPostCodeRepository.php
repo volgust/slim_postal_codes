@@ -14,17 +14,9 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     public function findByPostCode(string $postCode): ?array
     {
         $stmt = $this->pdo->prepare("
-        SELECT 
-            po.post_code AS post_code,
-            po.name AS post_office,
-            s.name AS settlement,
-            d.name AS district,
-            r.name AS region
-        FROM post_offices po
-        JOIN settlements s ON s.id = po.settlement_id 
-        JOIN districts d ON d.id = s.district_id
-        JOIN regions r ON r.id = d.region_id
-        WHERE po.post_code = :post_code
+        SELECT *
+        FROM locations l
+        WHERE l.post_code = :post_code
         LIMIT 1
     ");
 
@@ -38,25 +30,17 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     public function searchByAddress(string $address): array
     {
         $stmt = $this->pdo->prepare("
-        SELECT 
-            po.post_code AS post_code,
-            po.name AS post_office,
-            s.name AS settlement,
-            d.name AS district,
-            r.name AS region
-        FROM post_offices po
-        JOIN settlements s ON s.id = po.settlement_id 
-        JOIN districts d ON d.id = s.district_id
-        JOIN regions r ON r.id = d.region_id
-        WHERE r.name LIKE :address
-           OR d.name LIKE :address
-           OR s.name LIKE :address
-           OR po.name LIKE :address
+        SELECT *
+        FROM locations l
+        WHERE l.region_name LIKE :address
+           OR l.district_name LIKE :address
+           OR l.settlement_name LIKE :address
+           OR l.post_office_name LIKE :address
         ORDER BY 
-            r.name ASC,
-            d.name ASC,
-            s.name ASC,
-            po.name ASC
+            l.region_name ASC,
+            l.district_name ASC,
+            l.settlement_name ASC,
+            l.post_office_name ASC
         LIMIT 50
     ");
 
@@ -72,17 +56,9 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         $offset = ($page - 1) * $limit;
 
         $stmt = $this->pdo->prepare("
-        SELECT 
-            po.post_code AS post_code,
-            po.name AS post_office,
-            s.name AS settlement,
-            d.name AS district,
-            r.name AS region
-        FROM post_offices po
-        JOIN settlements s ON s.id = po.settlement_id 
-        JOIN districts d ON d.id = s.district_id
-        JOIN regions r ON r.id = d.region_id
-        ORDER BY po.post_code ASC
+        SELECT *
+        FROM locations l
+        ORDER BY l.post_code ASC
         LIMIT :limit OFFSET :offset
     ");
 
