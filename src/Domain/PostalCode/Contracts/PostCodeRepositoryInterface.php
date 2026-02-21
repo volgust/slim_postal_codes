@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\PostalalCode\Contracts;
+namespace App\Domain\PostalCode\Contracts;
 
 interface PostCodeRepositoryInterface
 {

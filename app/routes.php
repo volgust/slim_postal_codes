@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use App\Application\Actions\User\ListUsersAction;
 use App\Application\Actions\User\ViewUserAction;
+use App\Application\PostCode\Actions\CreatePostCodeAction;
+use App\Application\PostCode\Actions\DeletePostCodeAction;
+use App\Application\PostCode\Actions\ListPostCodesAction;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -23,5 +26,11 @@ return function (App $app) {
     $app->group('/users', function (Group $group) {
         $group->get('', ListUsersAction::class);
         $group->get('/{id}', ViewUserAction::class);
+    });
+
+    $app->group('/api/post-codes', function ($group) {
+        $group->get('', ListPostCodesAction::class);
+        $group->post('', CreatePostCodeAction::class);
+        $group->delete('/{post_code}', DeletePostCodeAction::class);
     });
 };
