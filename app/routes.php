@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use App\Application\Actions\User\ListUsersAction;
 use App\Application\Actions\User\ViewUserAction;
-use App\Application\PostCode\Actions\CreatePostCodeAction;
-use App\Application\PostCode\Actions\DeletePostCodeAction;
-use App\Application\PostCode\Actions\ListPostCodesAction;
+use App\Application\PostalCode\Actions\CreatePostCodeAction;
+use App\Application\PostalCode\Actions\DeletePostCodeAction;
+use App\Application\PostalCode\Actions\ListPostCodesAction;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
