@@ -12,6 +12,8 @@ return new class {
                 post_office_name VARCHAR(191) NOT NULL,
                 post_code CHAR(5) NOT NULL,
                 api_created TINYINT(1) DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY uq_post_code (post_code),
                 UNIQUE KEY uq_post_office (
                     region_name,
