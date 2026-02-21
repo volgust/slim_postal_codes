@@ -1,0 +1,33 @@
+volumes:
+    logs:
+        driver: local
+    mysql_data:
+
+services:
+    slim:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile
+        command: php -S 0.0.0.0:8080 -t public
+        container_name: slim_app
+        environment:
+            docker: "true"
+        ports:
+            - "8080:8080"
+        volumes:
+            - .:/var/www
+            - logs:/var/www/logs
+
+    mysql:
+        image: mysql:8.0
+        container_name: slim_mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+            MYSQL_DATABASE: ${DB_NAME}
+            MYSQL_USER: ${DB_USER}
+            MYSQL_PASSWORD: ${DB_PASS}
+        ports:
+            - "127.0.0.1:3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
