@@ -4,7 +4,7 @@ return new class {
     public function up(PDO $pdo): void
     {
         $pdo->exec("
-            CREATE TABLE locations (
+            CREATE TABLE postal_codes (
                 id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 region VARCHAR(191) NOT NULL,
                 district VARCHAR(191) NOT NULL,
@@ -27,6 +27,6 @@ return new class {
 
     public function down(PDO $pdo): void
     {
-        $pdo->exec("DROP TABLE IF EXISTS locations");
+        $pdo->exec("DROP TABLE IF EXISTS postal_codes");
     }
 };

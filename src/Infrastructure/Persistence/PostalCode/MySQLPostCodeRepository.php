@@ -15,7 +15,7 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     {
         $stmt = $this->pdo->prepare("
         SELECT *
-        FROM locations l
+        FROM postal_codes l
         WHERE l.post_code = :post_code
         LIMIT 1
     ");
@@ -31,7 +31,7 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     {
         $stmt = $this->pdo->prepare("
         SELECT *
-        FROM locations l
+        FROM postal_codes l
         WHERE l.region LIKE :address
            OR l.district LIKE :address
            OR l.settlement LIKE :address
@@ -57,7 +57,7 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
 
         $stmt = $this->pdo->prepare("
         SELECT *
-        FROM locations l
+        FROM postal_codes l
         ORDER BY l.post_code ASC
         LIMIT :limit OFFSET :offset
     ");
@@ -79,7 +79,7 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     public function create(array $data): array
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO locations
+            INSERT INTO postal_codes
                 (region, district, settlement, post_office, post_code, api_created)
             VALUES
                 (:region, :district, :settlement, :post_office, :post_code, :api_created)
@@ -104,7 +104,7 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
      */
     public function findById(int $id): array
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM locations WHERE id = :id");
+        $stmt = $this->pdo->prepare("SELECT * FROM postal_codes WHERE id = :id");
         $stmt->execute([':id' => $id]);
         $location = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -120,7 +120,7 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
      */
     public function existsByPostCode(string $postCode): bool
     {
-        $stmt = $this->pdo->prepare("SELECT 1 FROM locations WHERE post_code = :post_code LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT 1 FROM postal_codes WHERE post_code = :post_code LIMIT 1");
         $stmt->execute([':post_code' => $postCode]);
         return (bool) $stmt->fetchColumn();
     }

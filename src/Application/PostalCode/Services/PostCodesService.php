@@ -42,17 +42,17 @@ class PostCodesService
     }
 
     /**
-     * Create one or more locations, skip duplicates
+     * Create one or more postal_codes, skip duplicates
      *
-     * @param array $locations Validated locations
+     * @param array $postal_codes Validated postal_codes
      * @return array ['created' => [...], 'errors' => [...]]
      */
-    public function create(array $locations): array
+    public function create(array $postal_codes): array
     {
         $created = [];
         $errors = [];
 
-        foreach ($locations as $index => $location) {
+        foreach ($postal_codes as $index => $location) {
             try {
                 if ($this->repository->existsByPostCode($location['post_code'])) {
                     throw new \RuntimeException(

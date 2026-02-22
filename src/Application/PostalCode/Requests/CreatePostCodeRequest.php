@@ -19,7 +19,7 @@ class CreatePostCodeRequest
     }
 
     /**
-     * Validate input data (single or multiple locations)
+     * Validate input data (single or multiple postal_codes)
      *
      * @return array Validated data
      * @throws \InvalidArgumentException
