@@ -72,4 +72,14 @@ class PostCodesService
 
         return ['created' => $created, 'errors' => $errors];
     }
+
+    public function delete(array $postCodes): array
+    {
+        $deletedCount = $this->repository->deleteByPostCodes($postCodes);
+
+        return [
+            'requested' => count($postCodes),
+            'deleted' => $deletedCount
+        ];
+    }
 }

@@ -124,4 +124,23 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         $stmt->execute([':post_code' => $postCode]);
         return (bool) $stmt->fetchColumn();
     }
+
+    /**
+     * Remove post codes
+     *
+     * @param array $postCodes
+     * @return int
+     */
+    public function deleteByPostCodes(array $postCodes): int
+    {
+        $placeholders = implode(',', array_fill(0, count($postCodes), '?'));
+
+        $stmt = $this->pdo->prepare(
+            "DELETE FROM postal_codes WHERE post_code IN ($placeholders)"
+        );
+
+        $stmt->execute($postCodes);
+
+        return $stmt->rowCount();
+    }
 }

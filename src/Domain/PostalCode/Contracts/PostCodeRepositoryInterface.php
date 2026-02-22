@@ -9,4 +9,14 @@ interface PostCodeRepositoryInterface
     public function searchByAddress(string $address): array;
 
     public function paginate(int $limit, int $page): array;
+
+    public function create(array $data): array;
+
+    public function findById(int $id): array;
+
+    public function existsByPostCode(string $postCode): bool;
+
+    public function deleteByPostCodes(array $postCodes): int;
+
+
 }
