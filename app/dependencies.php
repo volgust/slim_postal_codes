@@ -11,6 +11,7 @@ use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use App\Application\Middleware\AuthMiddleware;
 
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
@@ -51,5 +52,8 @@ return function (ContainerBuilder $containerBuilder) {
             return new MySQLPostCodeRepository($pdo);
         },
 
+        AuthMiddleware::class => function () {
+            return new AuthMiddleware(getenv('API_KEY'));
+        },
     ]);
 };

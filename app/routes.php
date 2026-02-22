@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
 use Slim\Interfaces\RouteCollectorProxyInterface as Group;
 use App\Application\PostalCode\Actions\DeleteMultiplePostCodesAction;
+use App\Application\Middleware\AuthMiddleware;
 
 return function (App $app) {
     $app->options('/{routes:.*}', function (Request $request, Response $response) {
@@ -38,5 +39,5 @@ return function (App $app) {
 
         // Delete multiple
         $group->delete('', DeleteMultiplePostCodesAction::class);
-    });
+    })->add(AuthMiddleware::class);
 };
