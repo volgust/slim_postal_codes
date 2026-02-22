@@ -26,16 +26,16 @@ class CreatePostCodeRequest
      */
     public function validate(): array
     {
-        $locations = $this->data;
+        $postal_codes = $this->data;
 
         // Wrap single location into array if needed
-        if (!isset($locations[0]) || !is_array($locations[0])) {
-            $locations = [$locations];
+        if (!isset($postal_codes[0]) || !is_array($postal_codes[0])) {
+            $postal_codes = [$postal_codes];
         }
 
         $validated = [];
 
-        foreach ($locations as $index => $location) {
+        foreach ($postal_codes as $index => $location) {
             $this->data = $location;
             $this->errors = [];
 
