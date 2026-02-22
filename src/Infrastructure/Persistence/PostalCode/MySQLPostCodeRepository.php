@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\PostalCode;
 
 use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
 use PDO;
+use App\Domain\PostalCode\Entity\PostCode;
 
 class MySQLPostCodeRepository implements PostCodeRepositoryInterface
 {
@@ -70,33 +71,36 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Insert a new location into the database.
-     *
-     * @param array $data
-     * @return array Inserted record including ID
-     */
-    public function create(array $data): array
+    public function create(PostCode $postCode): PostCode
     {
+        $data = $postCode->toArray();
+
         $stmt = $this->pdo->prepare("
             INSERT INTO postal_codes
-                (region, district, settlement, post_office, post_code, api_created)
-            VALUES
-                (:region, :district, :settlement, :post_office, :post_code, :api_created)
+            (region, district, settlement, post_office, post_code, api_created)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
-            ':region'       => $data['region'],
-            ':district'     => $data['district'],
-            ':settlement'   => $data['settlement'],
-            ':post_office'  => $data['post_office'],
-            ':post_code'    => $data['post_code'],
-            ':api_created'  => $data['api_created'] ?? 0,
+            $data['region'],
+            $data['district'],
+            $data['settlement'],
+            $data['post_office'],
+            $data['post_code'],
+            $data['api_created']
         ]);
 
         $id = (int) $this->pdo->lastInsertId();
 
-        return $this->findById($id);
+        return new PostCode(
+            $id,
+            $data['region'],
+            $data['district'],
+            $data['settlement'],
+            $data['post_office'],
+            $data['post_code'],
+            $data['api_created']
+        );
     }
 
     /**

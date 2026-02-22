@@ -44,33 +44,31 @@ class PostCodesService
     /**
      * Create one or more postal_codes, skip duplicates
      *
-     * @param array $postal_codes Validated postal_codes
+     * @param array $entities Validated postal_codes
      * @return array ['created' => [...], 'errors' => [...]]
      */
-    public function create(array $postal_codes): array
+    public function create(array $entities): array
     {
         $created = [];
         $errors = [];
 
-        foreach ($postal_codes as $index => $location) {
-            try {
-                if ($this->repository->existsByPostCode($location['post_code'])) {
-                    throw new \RuntimeException(
-                        "Duplicate post_code: {$location['post_code']}"
-                    );
-                }
-
-                $created[] = $this->repository->create($location);
-
-            } catch (\RuntimeException $e) {
+        foreach ($entities as $index => $entity) {
+            if ($this->repository->existsByPostCode($entity->getPostCode())) {
                 $errors[] = [
-                    'location_index' => $index,
-                    'message' => $e->getMessage()
+                    'index' => $index,
+                    'message' => 'Duplicate post_code: ' . $entity->getPostCode()
                 ];
+                continue;
             }
+
+            $saved = $this->repository->create($entity);
+            $created[] = $saved->toArray();
         }
 
-        return ['created' => $created, 'errors' => $errors];
+        return [
+            'created' => $created,
+            'errors' => $errors
+        ];
     }
 
     public function delete(array $postCodes): array

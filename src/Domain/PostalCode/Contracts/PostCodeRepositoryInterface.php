@@ -2,6 +2,8 @@
 
 namespace App\Domain\PostalCode\Contracts;
 
+use App\Domain\PostalCode\Entity\PostCode;
+
 interface PostCodeRepositoryInterface
 {
     public function findByPostCode(string $postCode): ?array;
@@ -10,7 +12,7 @@ interface PostCodeRepositoryInterface
 
     public function paginate(int $limit, int $page): array;
 
-    public function create(array $data): array;
+    public function create(PostCode $postCode): PostCode;
 
     public function findById(int $id): array;
 

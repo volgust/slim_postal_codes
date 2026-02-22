@@ -8,6 +8,7 @@ use App\Application\Actions\Action;
 use App\Application\PostalCode\Requests\CreatePostCodeRequest;
 use App\Application\PostalCode\Services\PostCodesService;
 use Psr\Http\Message\ResponseInterface as Response;
+use App\Domain\PostalCode\Entity\PostCode;
 
 class CreatePostCodeAction extends Action
 {
@@ -22,10 +23,25 @@ class CreatePostCodeAction extends Action
         $request = new CreatePostCodeRequest($data);
 
         try {
-            $validated = $request->validate();
-            $result = $this->service->create($validated);
+            $validatedList = $request->validate(); // array of arrays
 
-            // 201 if at least one created, else 409
+            $entities = [];
+
+            foreach ($validatedList as $item) {
+                $entities[] = new PostCode(
+                    null,
+                    $item['region'],
+                    $item['district'],
+                    $item['settlement'],
+                    $item['post_office'],
+                    $item['post_code'],
+                    $item['api_created']
+                );
+            }
+
+            $result = $this->service->create($entities);
+
+            // If at least one created → 201
             $status = !empty($result['created']) ? 201 : 409;
 
             return $this->respondWithData($result, $status);
