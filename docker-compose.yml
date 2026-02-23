@@ -22,6 +22,7 @@ services:
         image: mysql:8.0
         container_name: slim_mysql
         restart: unless-stopped
+        command: --local-infile=1
         environment:
             MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
             MYSQL_DATABASE: ${DB_NAME}

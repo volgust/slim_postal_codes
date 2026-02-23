@@ -25,8 +25,10 @@
         "php": "^8.3",
         "ext-json": "*",
         "ext-pdo": "*",
+        "ext-zip": "*",
         "monolog/monolog": "^2.8",
         "php-di/php-di": "^6.4",
+        "phpoffice/phpspreadsheet": "^5.4",
         "slim/psr7": "^1.5",
         "slim/slim": "^4.10",
         "vlucas/phpdotenv": "^5.6"
@@ -37,7 +39,8 @@
         "phpstan/extension-installer": "^1.2.0",
         "phpstan/phpstan": "^1.8",
         "phpunit/phpunit": "^9.5.26",
-        "squizlabs/php_codesniffer": "^3.7"
+        "squizlabs/php_codesniffer": "^3.7",
+        "ext-xmlreader": "*"
     },
     "config": {
         "allow-plugins": {

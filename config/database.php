@@ -1,5 +1,12 @@
 <?php
 
+use Dotenv\Dotenv;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->safeLoad();
+
 return new PDO(
     sprintf(
         'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
@@ -12,5 +19,6 @@ return new PDO(
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::MYSQL_ATTR_LOCAL_INFILE => true,
     ]
 );
