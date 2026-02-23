@@ -6,13 +6,33 @@ use App\Application\PostalCode\DTO\ListPostCodesDTO;
 use App\Application\PostalCode\Resources\PostCodeResource;
 use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
 
+/**
+ * Service for managing postal codes.
+ *
+ * Provides search, creation, and deletion operations.
+ */
 class PostCodesService
 {
+    /**
+     * Constructor.
+     *
+     * @param PostCodeRepositoryInterface $repository Repository for CRUD operations on postal codes.
+     */
     public function __construct(
         private PostCodeRepositoryInterface $repository
     ) {
     }
 
+    /**
+     * Searches postal codes by post code or address, or returns paginated list.
+     *
+     * @param ListPostCodesDTO $request DTO containing search parameters:
+     *                                  - postCode: optional, specific post code to find
+     *                                  - address: optional, address string to search
+     *                                  - page: page number for pagination
+     *
+     * @return PostCodeResource[] Array of PostCodeResource objects matching the query.
+     */
     public function search(ListPostCodesDTO $request): array
     {
         $results = [];
@@ -42,10 +62,14 @@ class PostCodesService
     }
 
     /**
-     * Create one or more postal_codes, skip duplicates
+     * Create one or more postal codes, skipping duplicates.
      *
-     * @param array $entities Validated postal_codes
-     * @return array ['created' => [...], 'errors' => [...]]
+     * @param array $entities Array of validated postal code entities.
+     *
+     * @return array{
+     *     created: array<array>, // list of successfully created postal codes
+     *     errors: array<array{index:int, message:string}> // list of errors (duplicates)
+     * }
      */
     public function create(array $entities): array
     {
@@ -71,6 +95,16 @@ class PostCodesService
         ];
     }
 
+    /**
+     * Deletes postal codes by their values.
+     *
+     * @param string[] $postCodes Array of post code strings to delete.
+     *
+     * @return array{
+     *     requested: int, // total requested to delete
+     *     deleted: int    // number of post codes actually deleted
+     * }
+     */
     public function delete(array $postCodes): array
     {
         $deletedCount = $this->repository->deleteByPostCodes($postCodes);

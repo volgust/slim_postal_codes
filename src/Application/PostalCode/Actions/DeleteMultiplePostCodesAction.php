@@ -9,13 +9,38 @@ use App\Application\Actions\Action;
 use App\Application\PostalCode\Requests\CreatePostCodeRequest;
 use Psr\Http\Message\ResponseInterface as Response;
 
+/**
+ * Action to delete multiple postal codes in a single request.
+ *
+ * Expects a JSON body with a 'post_codes' array of 5-digit codes.
+ * Validates the input and delegates deletion to PostCodesService.
+ */
 class DeleteMultiplePostCodesAction extends Action
 {
+    /**
+     * Constructor.
+     *
+     * Injects the PostCodesService dependency.
+     *
+     * @param \App\Application\PostalCode\Services\PostCodesService $service Used to handle post code operations.
+     */
     public function __construct(
         private PostCodesService $service
     ) {
     }
 
+    /**
+     * Deletes multiple post codes in a single request.
+     *
+     * Expects a JSON body with a 'post_codes' array containing 5-digit post codes.
+     * Validates each code for correct format and scalar type, and calls the service
+     * to perform deletion. Returns a JSON response with the result or validation errors.
+     *
+     * @return \Psr\Http\Message\ResponseInterface|Response The HTTP response containing
+     *                                                      the result of the deletion.
+     *
+     * @throws \InvalidArgumentException If the input data is missing or invalid.
+     */
     protected function action(): Response
     {
         $data = $this->request->getParsedBody();

@@ -10,13 +10,44 @@ use App\Application\PostalCode\Services\PostCodesService;
 use Psr\Http\Message\ResponseInterface as Response;
 use App\Domain\PostalCode\Entity\PostCode;
 
+;
+
+/**
+ * Action responsible for creating one or multiple postal codes.
+ *
+ * This action handles HTTP requests to create postal codes. It:
+ *   - Parses and validates the request body using CreatePostCodeRequest.
+ *   - Converts validated data into PostCode entities.
+ *   - Delegates creation to PostCodesService.
+ *   - Returns an HTTP response indicating success, conflict, or validation error.
+ *
+ */
 class CreatePostCodeAction extends Action
 {
+    /**
+     * @param PostCodesService $service
+     */
     public function __construct(
         private PostCodesService $service,
     ) {
     }
 
+    /**
+     * Handles creation single or multiple post codes.
+     *
+     * Parses the request body, validates the input using CreatePostCodeRequest,
+     * converts each validated item into a PostCode entity, and passes them to
+     * the PostCodesService for creation. Returns a JSON response with the result.
+     *
+     * - Returns HTTP 201 if at least one post code was created.
+     * - Returns HTTP 409 if no new post codes were created.
+     * - Returns HTTP 422 if validation fails.
+     *
+     * @return \Psr\Http\Message\ResponseInterface|Response The HTTP response containing
+     *                                                      the creation result.
+     *
+     * @throws \InvalidArgumentException If the input data is invalid.
+     */
     protected function action(): Response
     {
         $data = $this->request->getParsedBody();
@@ -45,7 +76,6 @@ class CreatePostCodeAction extends Action
             $status = !empty($result['created']) ? 201 : 409;
 
             return $this->respondWithData($result, $status);
-
         } catch (\InvalidArgumentException $e) {
             return $this->respondWithData(
                 ['errors' => json_decode($e->getMessage(), true)],

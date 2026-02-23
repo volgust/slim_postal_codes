@@ -6,12 +6,28 @@ use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
 use PDO;
 use App\Domain\PostalCode\Entity\PostCode;
 
+/**
+ * MySQL implementation of PostCodeRepositoryInterface.
+ *
+ * Handles CRUD operations for postal codes using a PDO connection.
+ */
 class MySQLPostCodeRepository implements PostCodeRepositoryInterface
 {
+    /**
+     * Constructor.
+     *
+     * @param \PDO $pdo PDO connection to the database.
+     */
     public function __construct(private PDO $pdo)
     {
     }
 
+    /**
+     * Find a postal code by its value.
+     *
+     * @param string $postCode The 5-digit post code to search for.
+     * @return array|null The postal code record as associative array, or null if not found.
+     */
     public function findByPostCode(string $postCode): ?array
     {
         $stmt = $this->pdo->prepare("
@@ -28,6 +44,12 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         return $result ?: null;
     }
 
+    /**
+     * Search postal codes by address components (region, district, settlement, post office).
+     *
+     * @param string $address Partial address to search for.
+     * @return array List of matching postal codes as associative arrays (max 50).
+     */
     public function searchByAddress(string $address): array
     {
         $stmt = $this->pdo->prepare("
@@ -52,6 +74,13 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Paginate postal code records.
+     *
+     * @param int $limit Number of records per page.
+     * @param int $page Page number (1-based).
+     * @return array List of postal codes as associative arrays.
+     */
     public function paginate(int $limit, int $page): array
     {
         $offset = ($page - 1) * $limit;
@@ -71,6 +100,12 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Create a new postal code record.
+     *
+     * @param PostCode $postCode Entity containing postal code data.
+     * @return PostCode The saved PostCode entity with assigned ID.
+     */
     public function create(PostCode $postCode): PostCode
     {
         $data = $postCode->toArray();
@@ -104,7 +139,11 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     }
 
     /**
-     * Find a location by ID.
+     * Find a postal code record by ID.
+     *
+     * @param int $id The record ID.
+     * @return array The postal code record as associative array.
+     * @throws \RuntimeException If the record is not found.
      */
     public function findById(int $id): array
     {
@@ -120,7 +159,10 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     }
 
     /**
-     * Check if a post_code already exists
+     * Check if a post code already exists in the database.
+     *
+     * @param string $postCode The 5-digit post code.
+     * @return bool True if the post code exists, false otherwise.
      */
     public function existsByPostCode(string $postCode): bool
     {
@@ -130,10 +172,10 @@ class MySQLPostCodeRepository implements PostCodeRepositoryInterface
     }
 
     /**
-     * Remove post codes
+     * Delete multiple postal codes by their values.
      *
-     * @param array $postCodes
-     * @return int
+     * @param array $postCodes List of post codes to delete.
+     * @return int Number of deleted rows.
      */
     public function deleteByPostCodes(array $postCodes): int
     {

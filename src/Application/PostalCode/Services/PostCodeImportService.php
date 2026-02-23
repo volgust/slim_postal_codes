@@ -6,15 +6,49 @@ use PDO;
 use ZipArchive;
 use XMLReader;
 
+/**
+ * Service responsible for importing postal codes from XLSX archives.
+ *
+ * Handles:
+ * - Extracting XLSX files from ZIP archives
+ * - Parsing XLSX into CSV (streaming, low memory)
+ * - Loading CSV data into a temporary table
+ * - Synchronizing with the main postal_codes table (insert, update, delete)
+ */
 class PostCodeImportService
 {
+    /**
+     * PDO connection for database operations.
+     *
+     * @var PDO
+     */
     private PDO $pdo;
 
+    /**
+     * Constructor.
+     *
+     * @param PDO $pdo PDO connection for database operations.
+     */
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
     }
 
+    /**
+     * Main import method.
+     *
+     * Performs the full import process:
+     * - Extracts XLSX from archive
+     * - Converts XLSX to CSV
+     * - Loads CSV into temporary table
+     * - Syncs data into main table
+     * - Cleans up temporary table
+     *
+     * @param string $archivePath Path to the ZIP archive containing the XLSX file.
+     *
+     * @throws \RuntimeException on file errors or missing columns.
+     * @throws \Throwable on any database or processing error (rolls back transaction).
+     */
     public function import(string $archivePath): void
     {
         $this->pdo->beginTransaction();
@@ -35,6 +69,14 @@ class PostCodeImportService
         }
     }
 
+    /**
+     * Extracts the first XLSX file from a ZIP archive.
+     *
+     * @param string $archivePath Path to the ZIP archive.
+     * @return string Path to the extracted XLSX file.
+     *
+     * @throws \RuntimeException If the archive cannot be opened or no XLSX file is found.
+     */
     private function unzip(string $archivePath): string
     {
         $zip = new ZipArchive();
@@ -59,7 +101,14 @@ class PostCodeImportService
     }
 
     /**
-     * TRUE STREAMING XLSX PARSER (constant memory)
+     * Converts XLSX worksheet to CSV using streaming (constant memory).
+     *
+     * Skips rows with empty post_code.
+     *
+     * @param string $xlsxPath Path to the XLSX file.
+     * @return string Path to the generated CSV file.
+     *
+     * @throws \RuntimeException If required columns are missing.
      */
     private function convertXlsxToCsvStreaming(string $xlsxPath): string
     {
@@ -115,7 +164,6 @@ class PostCodeImportService
                     $xml->read();
                     $value = (string) $xml->value;
                     if ($type === 's') {
-                        // shared string
                         $value = $sharedStrings[(int) $value] ?? '';
                     }
                     $row[$colIndex] = trim($value); // place in the correct column
@@ -134,7 +182,7 @@ class PostCodeImportService
                         if (str_contains($colLower, 'region')) {
                             $headerMap['region'] = $i;
                         } elseif (str_contains($colLower, 'district')) {
-                            $headerMap['district'] = $i; // now will pick District new (Raion new)
+                            $headerMap['district'] = $i;
                         } elseif (str_contains($colLower, 'settlement')) {
                             $headerMap['settlement'] = $i;
                         } elseif (str_contains($colLower, 'post office') && !str_contains($colLower, 'code')) {
@@ -179,6 +227,12 @@ class PostCodeImportService
         return $tempCsv;
     }
 
+    /**
+     * Converts Excel column letters (A, B, ..., AA, etc.) to 0-based index.
+     *
+     * @param string $letter Column letter.
+     * @return int Column index (0-based).
+     */
     private function columnLetterToIndex(string $letter): int
     {
         $letter = strtoupper($letter);
@@ -193,6 +247,9 @@ class PostCodeImportService
         return $index - 1; // 0-based index
     }
 
+    /**
+     * Creates temporary table for CSV import.
+     */
     private function createTempTable(): void
     {
         $this->pdo->exec("
@@ -207,7 +264,9 @@ class PostCodeImportService
     }
 
     /**
-     * Fastest possible import method
+     * Loads CSV data into temporary table using MySQL LOAD DATA LOCAL INFILE.
+     *
+     * @param string $csvPath Path to CSV file.
      */
     private function loadCsvIntoTemp(string $csvPath): void
     {
@@ -223,6 +282,12 @@ class PostCodeImportService
         $stmt->execute(['file' => $csvPath]);
     }
 
+    /**
+     * Synchronizes data from temporary table into main postal_codes table.
+     *
+     * Inserts new records, updates changed records, and deletes missing ones
+     * (except those created via API).
+     */
     private function syncData(): void
     {
         // INSERT new + UPDATE changed
@@ -254,9 +319,11 @@ class PostCodeImportService
         ");
     }
 
+    /**
+     * Drops the temporary table.
+     */
     private function dropTempTable(): void
     {
         $this->pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_post_codes");
     }
 }
-
