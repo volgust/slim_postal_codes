@@ -58,7 +58,7 @@ class CreatePostCodeRequest
                 'settlement'  => trim($location['settlement']),
                 'post_office' => trim($location['post_office']),
                 'post_code'   => trim($location['post_code']),
-                'api_created' => $location['api_created'] ?? 0,
+                'api_created' => $location['api_created'] ?? 1,
             ];
         }
 
