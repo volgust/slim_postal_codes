@@ -58,13 +58,11 @@ function getLastBatch(PDO $pdo): int
 |--------------------------------------------------------------------------
 */
 if ($action === 'up') {
-
     $files = getMigrationFiles();
     $executed = getExecutedMigrations($pdo);
     $batch = getLastBatch($pdo) + 1;
 
     foreach ($files as $file) {
-
         $name = basename($file);
 
         if (in_array($name, $executed)) {
@@ -91,7 +89,6 @@ if ($action === 'up') {
 |--------------------------------------------------------------------------
 */
 elseif ($action === 'down') {
-
     $lastBatch = getLastBatch($pdo);
 
     if ($lastBatch === 0) {
@@ -107,7 +104,6 @@ elseif ($action === 'down') {
     $migrations = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     foreach ($migrations as $name) {
-
         $file = __DIR__ . '/../database/migrations/' . $name;
 
         if (!file_exists($file)) {
@@ -135,7 +131,6 @@ elseif ($action === 'down') {
 |--------------------------------------------------------------------------
 */
 elseif ($action === 'status') {
-
     $files = getMigrationFiles();
     $executed = getExecutedMigrations($pdo);
 
@@ -144,8 +139,6 @@ elseif ($action === 'status') {
         $status = in_array($name, $executed) ? '✓ migrated' : '✗ pending';
         echo str_pad($name, 40) . " $status\n";
     }
-}
-
-else {
+} else {
     echo "Invalid command. Use: up | down | status\n";
 }
