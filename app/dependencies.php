@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Application\Settings\SettingsInterface;
 use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
-use App\Infrastructure\Persistence\PostalCode\MySQLPostCodeRepository;
+use App\Infrastructure\Persistence\PostalCode\PostCodeRepository;
 use DI\ContainerBuilder;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -49,7 +49,7 @@ return function (ContainerBuilder $containerBuilder) {
 
         PostCodeRepositoryInterface::class => function ($container) {
             $pdo = $container->get(PDO::class);
-            return new MySQLPostCodeRepository($pdo);
+            return new PostCodeRepository($pdo);
         },
 
         AuthMiddleware::class => function () {

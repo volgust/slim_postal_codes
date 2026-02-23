@@ -11,7 +11,7 @@ use App\Domain\PostalCode\Entity\PostCode;
  *
  * Handles CRUD operations for postal codes using a PDO connection.
  */
-class MySQLPostCodeRepository implements PostCodeRepositoryInterface
+class PostCodeRepository implements PostCodeRepositoryInterface
 {
     /**
      * Constructor.

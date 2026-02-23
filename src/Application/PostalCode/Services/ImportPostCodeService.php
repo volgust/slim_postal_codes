@@ -2,7 +2,7 @@
 
 namespace App\Application\PostalCode\Services;
 
-use PDO;
+use App\Domain\PostalCode\Contracts\ImportPostCodeRepositoryInterface;
 use ZipArchive;
 use XMLReader;
 
@@ -12,87 +12,64 @@ use XMLReader;
  * Handles:
  * - Extracting XLSX files from ZIP archives
  * - Parsing XLSX into CSV (streaming, low memory)
- * - Loading CSV data into a temporary table
+ * - Loading CSV data into a temporary table via repository
  * - Synchronizing with the main postal_codes table (insert, update, delete)
  */
-class PostCodeImportService
+class ImportPostCodeService
 {
     /**
-     * PDO connection for database operations.
-     *
-     * @var PDO
+     * @param PostCodeRepositoryInterface $repository Repository for database operations.
      */
-    private PDO $pdo;
-
-    /**
-     * Constructor.
-     *
-     * @param PDO $pdo PDO connection for database operations.
-     */
-    public function __construct(PDO $pdo)
+    public function __construct(private ImportPostCodeRepositoryInterface $repository)
     {
-        $this->pdo = $pdo;
     }
 
     /**
-     * Main import method.
-     *
-     * Performs the full import process:
-     * - Extracts XLSX from archive
-     * - Converts XLSX to CSV
-     * - Loads CSV into temporary table
-     * - Syncs data into main table
-     * - Cleans up temporary table
+     * Executes the full import process from a ZIP archive.
      *
      * @param string $archivePath Path to the ZIP archive containing the XLSX file.
      *
-     * @throws \RuntimeException on file errors or missing columns.
-     * @throws \Throwable on any database or processing error (rolls back transaction).
+     * @throws \RuntimeException If files are missing or invalid.
+     * @throws \Throwable If any repository operation fails.
      */
     public function import(string $archivePath): void
     {
-        $this->pdo->beginTransaction();
+        $this->repository->createTempTable();
 
         try {
             $xlsxPath = $this->unzip($archivePath);
             $csvPath  = $this->convertXlsxToCsvStreaming($xlsxPath);
 
-            $this->createTempTable();
-            $this->loadCsvIntoTemp($csvPath);
-            $this->syncData();
-            $this->dropTempTable();
-
-            $this->pdo->commit();
-        } catch (\Throwable $e) {
-            $this->pdo->rollBack();
-            throw $e;
+            $this->repository->loadCsvIntoTemp($csvPath);
+            $this->repository->insertOrUpdateFromTemp();
+            $this->repository->deleteMissingFromTemp();
+        } finally {
+            $this->repository->dropTempTable();
         }
     }
 
     /**
      * Extracts the first XLSX file from a ZIP archive.
      *
-     * @param string $archivePath Path to the ZIP archive.
-     * @return string Path to the extracted XLSX file.
-     *
-     * @throws \RuntimeException If the archive cannot be opened or no XLSX file is found.
+     * @param string $archivePath Path to ZIP archive.
+     * @return string Path to extracted XLSX file.
+     * @throws \RuntimeException If archive cannot be opened or XLSX missing.
      */
     private function unzip(string $archivePath): string
     {
         $zip = new ZipArchive();
-
         if ($zip->open($archivePath) !== true) {
             throw new \RuntimeException('Cannot open archive');
         }
 
         $extractPath = sys_get_temp_dir() . '/postcodes_' . uniqid('', true);
-        mkdir($extractPath, 0777, true);
-
+        if (!mkdir($extractPath, 0777, true) && !is_dir($extractPath)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $extractPath));
+        }
         $zip->extractTo($extractPath);
         $zip->close();
 
         $files = glob($extractPath . '/*.xlsx');
-
         if (!$files) {
             throw new \RuntimeException('XLSX file not found in archive');
         }
@@ -101,12 +78,10 @@ class PostCodeImportService
     }
 
     /**
-     * Converts XLSX worksheet to CSV using streaming (constant memory).
+     * Converts XLSX worksheet to CSV using streaming (low memory).
      *
-     * Skips rows with empty post_code.
-     *
-     * @param string $xlsxPath Path to the XLSX file.
-     * @return string Path to the generated CSV file.
+     * @param string $xlsxPath Path to XLSX file.
+     * @return string Path to generated CSV.
      *
      * @throws \RuntimeException If required columns are missing.
      */
@@ -117,7 +92,6 @@ class PostCodeImportService
             throw new \RuntimeException('Cannot open XLSX file');
         }
 
-        // Load shared strings
         $sharedStringsXml = $zip->getFromName('xl/sharedStrings.xml');
         $sharedStrings = [];
         if ($sharedStringsXml) {
@@ -132,7 +106,6 @@ class PostCodeImportService
             $reader->close();
         }
 
-        // Load worksheet
         $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
         if (!$sheetXml) {
             throw new \RuntimeException('Cannot read worksheet');
@@ -140,7 +113,6 @@ class PostCodeImportService
 
         $tempCsv = tempnam(sys_get_temp_dir(), 'postcodes_') . '.csv';
         $handle  = fopen($tempCsv, 'w');
-
         $xml = new XMLReader();
         $xml->XML($sheetXml);
 
@@ -154,11 +126,11 @@ class PostCodeImportService
             }
 
             if ($xml->nodeType === XMLReader::ELEMENT && $xml->name === 'c') {
-                $cellRef = $xml->getAttribute('r'); // e.g., "A1", "B1"
+                $cellRef = $xml->getAttribute('r');
                 preg_match('/[A-Z]+/', $cellRef, $matches);
                 $colIndex = isset($matches[0]) ? $this->columnLetterToIndex($matches[0]) : count($row);
-                $type = $xml->getAttribute('t'); // type attribute
-                $xml->read(); // move to <v>
+                $type = $xml->getAttribute('t');
+                $xml->read();
 
                 if ($xml->nodeType === XMLReader::ELEMENT && $xml->name === 'v') {
                     $xml->read();
@@ -166,19 +138,17 @@ class PostCodeImportService
                     if ($type === 's') {
                         $value = $sharedStrings[(int) $value] ?? '';
                     }
-                    $row[$colIndex] = trim($value); // place in the correct column
+                    $row[$colIndex] = trim($value);
                 }
             }
 
             if ($xml->nodeType === XMLReader::END_ELEMENT && $xml->name === 'row') {
                 $rowIndex++;
-
                 if ($rowIndex === 1) {
                     // HEADER MAPPING
                     foreach ($row as $i => $col) {
                         $colLower = mb_strtolower(trim((string)$col));
-                        $colLower = preg_replace('/\s+/', ' ', $colLower); // collapse spaces
-
+                        $colLower = preg_replace('/\s+/', ' ', $colLower);
                         if (str_contains($colLower, 'region')) {
                             $headerMap['region'] = $i;
                         } elseif (str_contains($colLower, 'district')) {
@@ -192,7 +162,6 @@ class PostCodeImportService
                         }
                     }
 
-                    // verify all required columns
                     $required = ['region','district','settlement','post_office','post_code'];
                     foreach ($required as $key) {
                         if (!isset($headerMap[$key])) {
@@ -213,9 +182,8 @@ class PostCodeImportService
                     ];
 
                     if (trim($mapped[4]) === '') {
-                        continue; // skip this row
+                        continue;
                     }
-
                     fputcsv($handle, $mapped);
                 }
             }
@@ -228,10 +196,10 @@ class PostCodeImportService
     }
 
     /**
-     * Converts Excel column letters (A, B, ..., AA, etc.) to 0-based index.
+     * Converts Excel column letters to zero-based index.
      *
      * @param string $letter Column letter.
-     * @return int Column index (0-based).
+     * @return int Zero-based index.
      */
     private function columnLetterToIndex(string $letter): int
     {
@@ -244,86 +212,6 @@ class PostCodeImportService
             $index += ord($letter[$i]) - ord('A') + 1;
         }
 
-        return $index - 1; // 0-based index
-    }
-
-    /**
-     * Creates temporary table for CSV import.
-     */
-    private function createTempTable(): void
-    {
-        $this->pdo->exec("
-            CREATE TEMPORARY TABLE tmp_post_codes (
-                region VARCHAR(191),
-                district VARCHAR(191),
-                settlement VARCHAR(191),
-                post_office VARCHAR(191),
-                post_code CHAR(5) PRIMARY KEY
-            ) ENGINE=InnoDB
-        ");
-    }
-
-    /**
-     * Loads CSV data into temporary table using MySQL LOAD DATA LOCAL INFILE.
-     *
-     * @param string $csvPath Path to CSV file.
-     */
-    private function loadCsvIntoTemp(string $csvPath): void
-    {
-        $stmt = $this->pdo->prepare("
-            LOAD DATA LOCAL INFILE :file
-            INTO TABLE tmp_post_codes
-            FIELDS TERMINATED BY ','
-            ENCLOSED BY '\"'
-            LINES TERMINATED BY '\n'
-            (region, district, settlement, post_office, post_code)
-        ");
-
-        $stmt->execute(['file' => $csvPath]);
-    }
-
-    /**
-     * Synchronizes data from temporary table into main postal_codes table.
-     *
-     * Inserts new records, updates changed records, and deletes missing ones
-     * (except those created via API).
-     */
-    private function syncData(): void
-    {
-        // INSERT new + UPDATE changed
-        $this->pdo->exec("
-            INSERT INTO postal_codes
-                (region, district, settlement, post_office, post_code, api_created)
-            SELECT
-                t.region,
-                t.district,
-                t.settlement,
-                t.post_office,
-                t.post_code,
-                0
-            FROM tmp_post_codes t
-            ON DUPLICATE KEY UPDATE
-                region = VALUES(region),
-                district = VALUES(district),
-                settlement = VALUES(settlement),
-                post_office = VALUES(post_office)
-        ");
-
-        // DELETE missing (except API created)
-        $this->pdo->exec("
-            DELETE l FROM postal_codes l
-            LEFT JOIN tmp_post_codes t
-                ON l.post_code = t.post_code
-            WHERE t.post_code IS NULL
-              AND l.api_created = 0
-        ");
-    }
-
-    /**
-     * Drops the temporary table.
-     */
-    private function dropTempTable(): void
-    {
-        $this->pdo->exec("DROP TEMPORARY TABLE IF EXISTS tmp_post_codes");
+        return $index - 1;
     }
 }
