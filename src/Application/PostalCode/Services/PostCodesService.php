@@ -41,7 +41,7 @@ class PostCodesService
         if ($request->postCode) {
             $row = $this->repository->findByPostCode($request->postCode);
             if ($row) {
-                $results[] = PostCodeResource::fromArray($row);
+                $results[] = $row;
             }
             return $results;
         }
