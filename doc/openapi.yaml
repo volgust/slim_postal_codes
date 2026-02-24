@@ -1,0 +1,150 @@
+openapi: 3.0.0
+info:
+  title: 'Postal Codes API'
+  version: '0.1'
+paths:
+  /api/post-codes:
+    get:
+      tags:
+        - PostCodes
+      summary: 'List post codes'
+      operationId: 6a1a1d7f53e94d915c1715f000a1a849
+      parameters:
+        -
+          name: post_code
+          in: query
+          schema:
+            type: string
+        -
+          name: address
+          in: query
+          schema:
+            type: string
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: 'List of post codes'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostCode'
+    post:
+      tags:
+        - PostCodes
+      summary: 'Create post codes'
+      operationId: 6a587c165791ba90f4df1a0e7b0125f4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PostCode'
+      responses:
+        '201':
+          description: Created
+        '409':
+          description: Conflict
+        '422':
+          description: 'Validation error'
+    delete:
+      tags:
+        - PostCodes
+      summary: 'Delete multiple post codes'
+      operationId: 5955eda8fdc764a8723abe8c64fa73f4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                post_codes:
+                  type: array
+                  items: { type: string, pattern: '^\d{5}$' }
+              type: object
+      responses:
+        '200':
+          description: Deleted
+        '422':
+          description: 'Validation error'
+  '/api/post-codes/{post_code}':
+    get:
+      tags:
+        - PostCodes
+      summary: 'Get single post code'
+      operationId: 049b89cab89d4822392aab6575d8f728
+      parameters:
+        -
+          name: post_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{5}$'
+      responses:
+        '200':
+          description: 'Post code found'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostCode'
+        '404':
+          description: 'Not found'
+    delete:
+      tags:
+        - PostCodes
+      summary: 'Delete single post code'
+      operationId: 92bb47a1f113331b1e8b865acd1fe0bb
+      parameters:
+        -
+          name: post_code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{5}$'
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: 'Not found'
+        '422':
+          description: 'Validation error'
+components:
+  schemas:
+    PostCode:
+      properties:
+        id:
+          type: integer
+          example: 1
+        region:
+          type: string
+          example: Kyiv
+        district:
+          type: string
+          example: Shevchenkivskyi
+        settlement:
+          type: string
+          example: Kyiv
+        post_office:
+          type: string
+          example: 'Central Office'
+        post_code:
+          type: string
+          example: '01001'
+        api_created:
+          type: integer
+          example: 1
+      type: object
+tags:
+  -
+    name: PostCodes
+    description: PostCodes

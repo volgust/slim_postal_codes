@@ -10,3 +10,6 @@ migrate-down:
 
 migrate-status:
 	docker exec -it $(APP_CONTAINER) php bin/migrate.php status
+
+swagger:
+	./vendor/bin/openapi src -o doc/openapi.yaml
