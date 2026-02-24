@@ -19,6 +19,4 @@ interface PostCodeRepositoryInterface
     public function existsByPostCode(string $postCode): bool;
 
     public function deleteByPostCodes(array $postCodes): int;
-
-
 }

@@ -17,4 +17,6 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: "api_created", type: "integer", example: 1),
     ]
 )]
-class PostCodeSchema {}
+class PostCodeSchema
+{
+}

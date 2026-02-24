@@ -10,8 +10,6 @@ use App\Application\PostalCode\Services\PostCodesService;
 use Psr\Http\Message\ResponseInterface as Response;
 use App\Domain\PostalCode\Entity\PostCode;
 
-;
-
 /**
  * Action responsible for creating one or multiple postal codes.
  *

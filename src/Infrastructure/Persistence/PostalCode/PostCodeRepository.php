@@ -6,7 +6,6 @@ use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
 use PDO;
 use App\Domain\PostalCode\Entity\PostCode;
 
-
 /**
  * MySQL implementation of PostCodeRepositoryInterface.
  *
