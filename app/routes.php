@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
 use Slim\Interfaces\RouteCollectorProxyInterface as Group;
 use App\Application\PostalCode\Actions\DeleteMultiplePostCodesAction;
+use App\Application\PostalCode\Actions\GetPostCodeAction;
 use App\Application\Middleware\AuthMiddleware;
 
 return function (App $app) {
@@ -32,6 +33,7 @@ return function (App $app) {
 
     $app->group('/api/post-codes', function ($group) {
         $group->get('', ListPostCodesAction::class);
+        $group->get('/{post_code}', GetPostCodeAction::class);
         $group->post('', CreatePostCodeAction::class);
 
         // Delete single
