@@ -12,4 +12,7 @@ migrate-status:
 	docker exec -it $(APP_CONTAINER) php bin/migrate.php status
 
 swagger:
-	./vendor/bin/openapi src -o doc/openapi.yaml
+	./vendor/bin/openapi src -o swagger/openapi.yaml
+
+import:
+	docker exec -it $(APP_CONTAINER) php bin/import_post_codes.php /var/www/archive/postindex.zip
