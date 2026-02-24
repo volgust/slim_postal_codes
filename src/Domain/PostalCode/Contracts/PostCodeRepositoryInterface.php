@@ -6,7 +6,7 @@ use App\Domain\PostalCode\Entity\PostCode;
 
 interface PostCodeRepositoryInterface
 {
-    public function findByPostCode(string $postCode): ?array;
+    public function findByPostCode(string $postCode): ?PostCode;
 
     public function searchByAddress(string $address): array;
 
@@ -14,7 +14,7 @@ interface PostCodeRepositoryInterface
 
     public function create(PostCode $postCode): PostCode;
 
-    public function findById(int $id): array;
+    public function findById(int $id): ?PostCode;
 
     public function existsByPostCode(string $postCode): bool;
 

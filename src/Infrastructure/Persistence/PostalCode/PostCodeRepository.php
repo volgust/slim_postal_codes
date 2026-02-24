@@ -6,6 +6,7 @@ use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
 use PDO;
 use App\Domain\PostalCode\Entity\PostCode;
 
+
 /**
  * MySQL implementation of PostCodeRepositoryInterface.
  *
@@ -28,7 +29,7 @@ class PostCodeRepository implements PostCodeRepositoryInterface
      * @param string $postCode The 5-digit post code to search for.
      * @return array|null The postal code record as associative array, or null if not found.
      */
-    public function findByPostCode(string $postCode): ?array
+    public function findByPostCode(string $postCode): ?PostCode
     {
         $stmt = $this->pdo->prepare("
         SELECT *
@@ -41,7 +42,11 @@ class PostCodeRepository implements PostCodeRepositoryInterface
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $result ?: null;
+        if (!$result) {
+            return null;
+        }
+
+        return PostCode::fromArray($result);
     }
 
     /**
@@ -145,17 +150,17 @@ class PostCodeRepository implements PostCodeRepositoryInterface
      * @return array The postal code record as associative array.
      * @throws \RuntimeException If the record is not found.
      */
-    public function findById(int $id): array
+    public function findById(int $id): ?PostCode
     {
         $stmt = $this->pdo->prepare("SELECT * FROM postal_codes WHERE id = :id");
         $stmt->execute([':id' => $id]);
-        $location = $stmt->fetch(PDO::FETCH_ASSOC);
+        $postCode = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$location) {
+        if (!$postCode) {
             throw new \RuntimeException("Location not found with ID {$id}");
         }
 
-        return $location;
+        return PostCode::fromArray($postCode);
     }
 
     /**

@@ -68,6 +68,19 @@ class PostCode
         }
     }
 
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            id: isset($data['id']) ? (int)$data['id'] : null,
+            region: $data['region'],
+            district: $data['district'],
+            settlement: $data['settlement'],
+            postOffice: $data['post_office'],
+            postCode: $data['post_code'],
+            apiCreated: (int)$data['api_created'],
+        );
+    }
+
     /**
      * Get the ID of the postal code.
      *

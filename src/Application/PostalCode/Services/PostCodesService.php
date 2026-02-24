@@ -5,6 +5,7 @@ namespace App\Application\PostalCode\Services;
 use App\Application\PostalCode\DTO\ListPostCodesDTO;
 use App\Application\PostalCode\Resources\PostCodeResource;
 use App\Domain\PostalCode\Contracts\PostCodeRepositoryInterface;
+use \App\Domain\PostalCode\Entity\PostCode;
 
 /**
  * Service for managing postal codes.
@@ -59,6 +60,11 @@ class PostCodesService
         }
 
         return $results;
+    }
+
+    public function find(string $postCode): ?PostCode
+    {
+        return $this->repository->findByPostCode($postCode);
     }
 
     /**
